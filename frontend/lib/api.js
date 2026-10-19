@@ -1,5 +1,7 @@
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+).replace(/\/+$/, "");
+const REQUIREMENTS_URL = `${BASE_URL}/api/v1/requirements`;
 
 function parseApiError(error, data) {
   if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
@@ -29,27 +31,14 @@ function parseApiError(error, data) {
 }
 
 export async function createRequirement(payload) {
-  const primaryUrl = `${BASE_URL}/api/requirements`;
-  const fallbackUrl = `${BASE_URL}/api/v1/requirements`;
-
   try {
-    let response = await fetch(primaryUrl, {
+    const response = await fetch(REQUIREMENTS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
-
-    if (response.status === 404) {
-      response = await fetch(fallbackUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-    }
 
     const data = await response.json().catch(() => null);
 
@@ -66,7 +55,7 @@ export async function createRequirement(payload) {
     if (err.details) throw err;
 
     const friendlyError = new Error(
-      "Unable to connect to the backend server. Please verify the backend is running on port 8080."
+      "Unable to connect to the backend server. Please check NEXT_PUBLIC_API_URL and verify the backend is running."
     );
     friendlyError.details = {
       message: "Server unreachable or connection refused",
@@ -79,7 +68,7 @@ export async function createRequirement(payload) {
 
 export async function getRequirements(category = "") {
   try {
-    const url = new URL(`${BASE_URL}/api/requirements`);
+    const url = new URL(REQUIREMENTS_URL);
     if (category) url.searchParams.set("category", category);
 
     const response = await fetch(url.toString(), {
@@ -102,7 +91,7 @@ export async function getRequirements(category = "") {
 
 export async function getRequirementById(id) {
   try {
-    const response = await fetch(`${BASE_URL}/api/requirements/${id}`, {
+    const response = await fetch(`${REQUIREMENTS_URL}/${encodeURIComponent(id)}`, {
       method: "GET",
       headers: { Accept: "application/json" },
     });

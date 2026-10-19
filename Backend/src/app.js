@@ -10,12 +10,23 @@ const allowedOrigin =
     process.env.CORS_ORIGIN ||
     (process.env.NODE_ENV === "development"
         ? "http://localhost:5000"
-        : "");
+        : "https://go-prat.vercel.app");
+
+const allowedOrigins = allowedOrigin
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
 app.use(cors({
-    origin: allowedOrigin,
+    origin(origin, callback) {
+        callback(null, !origin || allowedOrigins.includes(origin));
+    },
     credentials: true
 }))
+
+app.get("/api/health", (_req, res) => {
+    res.status(200).json({ healthy: true });
+});
 
 import requirementRouter from "./routes/requirement.route.js"
 app.use("/api/v1/requirements", requirementRouter)
